@@ -1,7 +1,6 @@
 package servlets;
 
-import accounts.AccountService;
-import accounts.UserProfile;
+import dbService.AccountService;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -29,9 +28,16 @@ public class SignUpServlet extends HttpServlet {
                        HttpServletResponse response) throws ServletException, IOException {
         String login = request.getParameter("login");
         String pass = request.getParameter("password");
-        accountService.addNewUser(new UserProfile(login,pass,login));
-        response.setContentType("text/html;charset=utf-8");
-        response.setStatus(HttpServletResponse.SC_OK);
+
+        if (login == null || pass == null) {
+            response.setContentType("text/html;charset=utf-8");
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            return;
+        } else {
+            accountService.addNewUser(login, pass);
+            response.setContentType("text/html;charset=utf-8");
+            response.setStatus(HttpServletResponse.SC_OK);
+        }
     }
 
     //change profile

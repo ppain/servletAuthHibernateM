@@ -1,6 +1,7 @@
 package dbService.dao;
 
-import dbService.dataSets.UsersDataSet;
+import dbService.DBException;
+import dbService.dataSets.UserProfile;
 import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.query.Query;
@@ -16,28 +17,31 @@ public class UsersDAO {
         this.session = session;
     }
 
-    public UsersDataSet get(long id) throws HibernateException {
-        return (UsersDataSet) session.get(UsersDataSet.class, id);
+    public UserProfile getUserById(long id) throws HibernateException {
+        return (UserProfile) session.get(UserProfile.class, id);
     }
 
-    public long getUserId(String username){
+    public UserProfile getUser(String login) throws HibernateException{
         CriteriaBuilder builder = session.getCriteriaBuilder();
         //создаем критерий
-        CriteriaQuery<UsersDataSet> criteriaQuery = builder.createQuery(UsersDataSet.class);
+        CriteriaQuery<UserProfile> criteriaQuery = builder.createQuery(UserProfile.class);
         //определяем переменную диапазона для FROM
-        Root<UsersDataSet> root = criteriaQuery.from(UsersDataSet.class);
+        Root<UserProfile> root = criteriaQuery.from(UserProfile.class);
         //какой тип результата запроса будет (можно поля задавать
         criteriaQuery.select(root);
         //задаем where
-        criteriaQuery.where(builder.equal(root.get("name"), username));
+        criteriaQuery.where(builder.equal(root.get("login"), login));
         //собственно сам запрос
-        Query<UsersDataSet> query = session.createQuery(criteriaQuery);
-        UsersDataSet result = query.getSingleResult();
-        return result.getId();
+        Query<UserProfile> query = session.createQuery(criteriaQuery);
+        try {
+            return query.getSingleResult();
+        } catch (Exception nre) {
+            return null;
+        }
     }
 
 
-    public long insertUser(String name) throws HibernateException {
-        return (Long) session.save(new UsersDataSet(name));
+    public long insertUser(String login, String password) throws HibernateException {
+        return (Long) session.save(new UserProfile(login,password));
     }
 }

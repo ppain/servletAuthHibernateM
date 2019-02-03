@@ -1,22 +1,18 @@
 package dbService;
 
 import dbService.dao.UsersDAO;
-import dbService.dataSets.UsersDataSet;
+import dbService.dataSets.UserProfile;
 import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.Configuration;
-import org.hibernate.internal.SessionFactoryImpl;
 import org.hibernate.service.ServiceRegistry;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-
 public class DBService {
-    private static final String hibernate_show_sql = "true";
-    private static final String hibernate_hbm2ddl_auto = "create";
+    private static final String hibernate_show_sql = "false";
+    private static final String hibernate_hbm2ddl_auto = "update";
 
     private final SessionFactory sessionFactory;
 
@@ -28,7 +24,7 @@ public class DBService {
     @SuppressWarnings("UnusedDeclaration")
     private Configuration getMySqlConfiguration() {
         Configuration configuration = new Configuration();
-        configuration.addAnnotatedClass(UsersDataSet.class);
+        configuration.addAnnotatedClass(UserProfile.class);
 
         configuration.setProperty("hibernate.dialect", "org.hibernate.dialect.MySQL5Dialect");
         configuration.setProperty("hibernate.connection.url", "jdbc:mysql://192.168.142.130:3306/java?useSSL=false&serverTimezone=UTC&useLegacyDatetimeCode=false");
@@ -41,7 +37,7 @@ public class DBService {
 
     private Configuration getH2Configuration() {
         Configuration configuration = new Configuration();
-        configuration.addAnnotatedClass(UsersDataSet.class);
+        configuration.addAnnotatedClass(UserProfile.class);
 
         configuration.setProperty("hibernate.dialect", "org.hibernate.dialect.H2Dialect");
         configuration.setProperty("hibernate.connection.driver_class", "org.h2.Driver");
@@ -54,11 +50,11 @@ public class DBService {
     }
 
 
-    public UsersDataSet getUser(long id) throws DBException {
+    public UserProfile getUserById(long id) throws DBException {
         try {
             Session session = sessionFactory.openSession();
             UsersDAO dao = new UsersDAO(session);
-            UsersDataSet dataSet = dao.get(id);
+            UserProfile dataSet = dao.getUserById(id);
             session.close();
             return dataSet;
         } catch (HibernateException e) {
@@ -66,12 +62,25 @@ public class DBService {
         }
     }
 
-    public long addUser(String name) throws DBException {
+    public UserProfile getUser(String login) throws DBException {
+        try {
+            Session session = sessionFactory.openSession();
+            UsersDAO dao = new UsersDAO(session);
+            UserProfile dataSet = dao.getUser(login);
+            session.close();
+            return dataSet;
+        } catch (HibernateException e) {
+            throw new DBException(e);
+        }
+    }
+
+
+    public long addUser(String login, String password) throws DBException {
         try {
             Session session = sessionFactory.openSession();
             Transaction transaction = session.beginTransaction();
             UsersDAO dao = new UsersDAO(session);
-            long id = dao.insertUser(name);
+            long id = dao.insertUser(login, password);
             transaction.commit();
             session.close();
             return id;
@@ -80,7 +89,7 @@ public class DBService {
         }
     }
 
-        public void printConnectInfo() {
+    public void printConnectInfo() {
         Session session = sessionFactory.openSession();
         session.doWork(connection1 -> {
             System.out.println("DB name: " + connection1.getMetaData().getDatabaseProductName());
